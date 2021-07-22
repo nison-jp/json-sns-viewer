@@ -58,6 +58,7 @@ export default {
           this.$set(this, 'text', null);
           this.$set(this, 'sending', false);
           this.$emit('postComplete', response.data.id)
+          localStorage.setItem('user_id', response.data._user_id);
           this.$nextTick(() => {
             this.$refs.refsTextField.$refs.input.focus();
           })
