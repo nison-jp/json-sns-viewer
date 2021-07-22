@@ -20,20 +20,15 @@
     </v-card-title>
     <v-card-text class="py-0">
       <compose @postComplete="addEvent"></compose>
-      <v-timeline dense>
-        <v-slide-x-reverse-transition
-            group
-            hide-on-leave
-        >
-          <v-timeline-item
+          <div
               v-for="item in sortedPosts"
               :key="item.id"
               :color="item.color"
-              small
-              fill-dot
           >
             <v-card
                 tile
+                elevation="4"
+
             >
               <v-card-title @click="showUserDialog(item._user_id)">{{ userName(item._user_id) }}</v-card-title>
               <v-card-subtitle>
@@ -63,7 +58,6 @@
                 <v-btn text :to="'/status/' + item.id">DETAIL</v-btn>
                 <v-btn text @click="getLike(item.id)">GET LIKE</v-btn>
                 {{ getLikeCount(item.id) }}
-                <v-btn text @click="addLike(item.id)">ADD LIKE</v-btn>
               </v-card-actions>
             </v-card>
 
@@ -75,9 +69,7 @@
             <!--            >-->
             <!--              Lorem ipsum dolor sit amet, no nam oblique veritus. Commune scaevola imperdiet nec ut, sed euismod convenire principes at. Est et nobis iisque percipit, an vim zril disputando voluptatibus, vix an salutandi sententiae.-->
             <!--            </v-alert>-->
-          </v-timeline-item>
-        </v-slide-x-reverse-transition>
-      </v-timeline>
+          </div>
     </v-card-text>
     <v-dialog
         v-model="showDialog"
@@ -270,7 +262,7 @@ export default {
     getLikeCount(id) {
       let like = this.likes.find((like) => like.id === id);
       if (like == undefined) {
-        return 0;
+        return '?';
       } else {
         return like.like_count;
       }
