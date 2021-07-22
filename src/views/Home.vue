@@ -8,7 +8,6 @@
     >
       <span class="text-h6">Posts</span>
       <v-spacer></v-spacer>
-      <v-btn text @click="getFavorites">GET LIKES</v-btn>
       <v-btn
           :outlined="interval == null"
           :color="interval == null ? 'white' : 'primary'"
@@ -57,7 +56,7 @@
               <v-card-actions>
                 <v-btn text @click="showReply.push(item.id)">REPLY</v-btn>
                 <v-btn text :to="'/status/' + item.id">DETAIL</v-btn>
-                <v-btn text @click="getLike(item.id)">LIKES:</v-btn>
+                <v-btn text >LIKES:</v-btn>
                 {{ getLikeCount(item.id) }}
                 <v-btn text @click="addLike(item.id)">LIKE</v-btn>
               </v-card-actions>
@@ -126,6 +125,7 @@ const BASE_URL = 'https://versatileapi.herokuapp.com/api';
 const API = {
   users: {
     all: BASE_URL + '/user/all',
+    count: BASE_URL + '/user/count',
     show: function (id) {
       return BASE_URL + '/user/' + id;
     },
@@ -133,6 +133,7 @@ const API = {
   },
   text: {
     all: BASE_URL + '/text/all',
+    count: BASE_URL + '/text/count',
     latest: function (limit) {
       return BASE_URL + '/text/all?$orderby=_created_at desc&$limit=' + limit;
     },
@@ -140,8 +141,19 @@ const API = {
       return BASE_URL + '/text/' + id;
     }
   },
-  like: function (id) {
-    return BASE_URL + '/like/' + id;
+  like:{
+    all: BASE_URL + '/like/all',
+    count: BASE_URL + '/like/count',
+    text: function (id) {
+      return BASE_URL + '/like/' + id;
+    }
+  },
+  image: {
+    all: BASE_URL + '/image/all',
+    count: BASE_URL + '/image/count',
+    show: function (id) {
+      return BASE_URL + '/image/' + id;
+    }
   }
 }
 // eslint-disable-next-line no-unused-vars
@@ -206,6 +218,21 @@ export default {
         };
       }
     },
+    zeroLikes() {
+      return this.items.map((item) => {
+        let like = this.likes.find((like) => {
+          return like.id === item.id;
+        });
+        if (like === undefined) {
+          return {
+            id: item.id,
+            like_count:0
+          };
+        } else {
+          return like;
+        }
+      })
+    },
   },
   methods: {
     isMyUser(user_id) {
@@ -215,7 +242,7 @@ export default {
 
       this.addEvent();
       this.getUserMaster();
-
+      await this.getFavorites();
     },
     register() {
       if (this.name !== null && this.description !== null) {
@@ -282,7 +309,7 @@ export default {
       }
     },
     getLikeCount(id) {
-      let like = this.likes.find((like) => like.id === id);
+      let like = this.zeroLikes.find((like) => like.id === id);
       if (like == undefined) {
         return '?';
       } else {
@@ -292,7 +319,7 @@ export default {
     addLike(id) {
       this.getLike(id).then((likeObj) => {
         let like_count = likeObj.like_count + 1;
-        this.axios.put(API.like(id), {
+        this.axios.put(API.like.text(id), {
           like_count: like_count
         }, {
           headers: {
@@ -311,7 +338,7 @@ export default {
     async getLike(id) {
       let that = this;
       return new Promise(function (resolve, reject) {
-        that.axios.get(API.like(id)).then((response) => {
+        that.axios.get(API.like.text(id)).then((response) => {
           that.upsert(that.likes, response.data);
           resolve(response.data);
         }).catch((error) => {
@@ -334,17 +361,22 @@ export default {
       else array.push(item);
     },
     async getFavorites() {
-      for (let index = 0; index < this.items.length; index++) {
-        const post = this.items[index];
-        const i = this.likes.findIndex(_item => _item.id === post.id);
-        if (i > -1) {
-          // do nothing
-        } else {
-          await this.getLike(post.id).finally(async () => {
-            await sleep(1000);
-          });
-        }
-      }
+      return this.axios.get(API.like.all).then((response) => {
+        this.$set(this, 'likes', response.data);
+      }).catch((error) => {
+        this.$toast.error(error.toString());
+      })
+      // for (let index = 0; index < this.items.length; index++) {
+      //   const post = this.items[index];
+      //   const i = this.likes.findIndex(_item => _item.id === post.id);
+      //   if (i > -1) {
+      //     // do nothing
+      //   } else {
+      //     await this.getLike(post.id).finally(async () => {
+      //       await sleep(1000);
+      //     });
+      //   }
+      // }
     },
     genAlert() {
       const color = this.genColor()
