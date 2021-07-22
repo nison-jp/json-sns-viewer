@@ -262,7 +262,7 @@
         return ICONS[color]
       },
       start () {
-        this.interval = setInterval(this.addEvent, 5000)
+        this.interval = setInterval(this.loader, 5000)
       },
       stop () {
         clearInterval(this.interval)
