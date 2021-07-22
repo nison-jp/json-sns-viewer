@@ -193,6 +193,10 @@
       },
     },
     methods: {
+      loader() {
+        this.addEvent();
+        this.getUserMaster();
+      },
       register() {
         if (this.name !== null && this.description !== null) {
           this.axios.post(API.users.create, {
