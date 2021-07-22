@@ -8,6 +8,7 @@
     >
       <span class="text-h6">Posts</span>
       <v-spacer></v-spacer>
+      <v-btn text @click="getFavorites">GET LIKES</v-btn>
       <v-btn
           :outlined="interval == null"
           :color="interval == null ? 'white' : 'primary'"
@@ -56,8 +57,9 @@
               <v-card-actions>
                 <v-btn text @click="showReply.push(item.id)">REPLY</v-btn>
                 <v-btn text :to="'/status/' + item.id">DETAIL</v-btn>
-                <v-btn text @click="getLike(item.id)">GET LIKE</v-btn>
+                <v-btn text @click="getLike(item.id)">LIKES:</v-btn>
                 {{ getLikeCount(item.id) }}
+                <v-btn text @click="addLike(item.id)">LIKE</v-btn>
               </v-card-actions>
             </v-card>
 
@@ -142,11 +144,13 @@ const API = {
     return BASE_URL + '/like/' + id;
   }
 }
+// eslint-disable-next-line no-unused-vars
+const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
 export default {
   name: 'Home',
 
   components: {
-    Compose
+    Compose,
   },
   data: () => ({
     showDialog: false,
@@ -172,6 +176,9 @@ export default {
     }
     if (localStorage.getItem('users')) {
       this.$set(this, 'users', JSON.parse(localStorage.getItem('users')));
+    }
+    if (localStorage.getItem('likes')) {
+      this.$set(this, 'likes', JSON.parse(localStorage.getItem('likes')));
     }
     this.getUserMaster();
     this.addEvent();
@@ -203,11 +210,11 @@ export default {
     isMyUser(user_id) {
       return localStorage.getItem('user_id') === user_id;
     },
-    loader() {
+    async loader() {
 
       this.addEvent();
       this.getUserMaster();
-      //this.getFavorites();
+
     },
     register() {
       if (this.name !== null && this.description !== null) {
@@ -216,8 +223,10 @@ export default {
           description: this.description,
         }).then((response) => {
           localStorage.setItem('user_id', response.data.id);
-          console.log(response);
+          this.$toast.success('ユーザー登録しました: '. response.data.id);
           this.getUserMaster();
+        }).catch((error) => {
+          this.$toast.error(error.toString());
         })
       }
     },
@@ -241,11 +250,17 @@ export default {
             this.items.push(response.data);
             this.$set(this, 'showReply', this.showReply.filter(e => e !== response.data.in_reply_to_text_id));
           })
+          .catch((error) => {
+            this.$toast.error(error.toString());
+          })
     },
     addEvent() {
       this.axios.get(API.text.latest(100))
           .then((response) => {
             this.$set(this, 'items', response.data);
+          })
+          .catch((error) => {
+            this.$toast.error(error.toString());
           })
     },
     getUserMaster() {
@@ -274,10 +289,15 @@ export default {
           like_count: like_count
         }, {
           headers: {
-            'Authorization' : 'HelloWorld'
+            'Authorization' : 'LOVE'
           }
-        }).then((response) => {
-          console.log(response);
+        }).then(() => {
+          this.getLike(id)
+              .catch((error) => {
+                this.$toast.error(error.toString());
+              });
+        }).catch((error) => {
+          this.$toast.error(error.toString());
         })
       })
     },
@@ -295,6 +315,7 @@ export default {
             });
             resolve({id:id, like_count: 0});
           } else {
+            that.$toast.error(error.toString());
             reject(error);
           }
         })
@@ -305,10 +326,18 @@ export default {
       if (i > -1) array[i] = item; // (2)
       else array.push(item);
     },
-    getFavorites() {
-      this.items.forEach((post) => {
-        this.getLike(post.id);
-      })
+    async getFavorites() {
+      for (let index = 0; index < this.items.length; index++) {
+        const post = this.items[index];
+        const i = this.likes.findIndex(_item => _item.id === post.id);
+        if (i > -1) {
+          // do nothing
+        } else {
+          await this.getLike(post.id).finally(async () => {
+            await sleep(1000);
+          });
+        }
+      }
     },
     genAlert() {
       const color = this.genColor()
@@ -338,6 +367,9 @@ export default {
     },
     users(newUsers) {
       localStorage.setItem('users',JSON.stringify(newUsers));
+    },
+    likes(newLikes) {
+      localStorage.setItem('likes',JSON.stringify(newLikes));
     }
   }
 }

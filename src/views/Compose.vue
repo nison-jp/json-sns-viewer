@@ -44,9 +44,10 @@ export default {
   methods: {
     submit(isTest=false) {
       if (this.text !== null) {
+        let text = this.text;
         this.$set(this, 'sending', true);
         this.axios.post('https://versatileapi.herokuapp.com/api/text' + (isTest ? '_test' : ''), {
-          text: this.text,
+          text: text,
           in_reply_to_text_id: this.in_reply_to_text_id,
           in_reply_to_user_id: this.in_reply_to_user_id
         }, {
@@ -58,6 +59,7 @@ export default {
           this.$set(this, 'text', null);
           this.$set(this, 'sending', false);
           this.$emit('postComplete', response.data.id)
+          this.$toast.success('投稿しました:' + text);
           this.axios.get('https://versatileapi.herokuapp.com/api/text/' + response.data.id).then((text) => {
             localStorage.setItem('user_id', text.data._user_id);
           });
