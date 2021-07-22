@@ -164,6 +164,7 @@ export default {
     description: null,
     myUserId: null,
     likes: [],
+    lockUserUpdate: false,
   }),
 
   beforeDestroy() {
@@ -231,8 +232,12 @@ export default {
       }
     },
     showUserDialog(user_id) {
+      if (user_id === this.myUserId) {
+        this.$set(this, 'lockUserUpdate', true);
+      }
       this.$set(this, 'DialogUserId', user_id);
       this.$set(this, 'showDialog', true);
+
     },
     userName(user_id) {
       let user = this.users.find((user) => {
@@ -264,15 +269,17 @@ export default {
           })
     },
     getUserMaster() {
-      this.axios.get(API.users.all)
-          .then((response) => {
-            this.$set(this, 'users', response.data);
-            let myUser = response.data.find((user) => user.id === this.myUserId);
-            if (myUser !== undefined) {
-              this.$set(this, 'name', myUser.name);
-              this.$set(this, 'description', myUser.description);
-            }
-          })
+      if (!this.lockUserUpdate) {
+        this.axios.get(API.users.all)
+            .then((response) => {
+              this.$set(this, 'users', response.data);
+              let myUser = response.data.find((user) => user.id === this.myUserId);
+              if (myUser !== undefined) {
+                this.$set(this, 'name', myUser.name);
+                this.$set(this, 'description', myUser.description);
+              }
+            })
+      }
     },
     getLikeCount(id) {
       let like = this.likes.find((like) => like.id === id);
@@ -370,6 +377,11 @@ export default {
     },
     likes(newLikes) {
       localStorage.setItem('likes',JSON.stringify(newLikes));
+    },
+    showUserDialog(newDialogState) {
+      if (!newDialogState) {
+        this.$set(this, 'lockUserUpdate', false);
+      }
     }
   }
 }

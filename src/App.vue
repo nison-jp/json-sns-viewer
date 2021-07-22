@@ -26,7 +26,7 @@
       </div>
 
       <v-spacer></v-spacer>
-      <div>V1.4</div>
+      <div>V1.4.2</div>
       <v-spacer>
       </v-spacer>
       <v-btn text to="/settings">SETTINGS</v-btn>
