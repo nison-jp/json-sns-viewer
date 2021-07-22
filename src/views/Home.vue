@@ -219,6 +219,7 @@
         if (user !== undefined) {
           return user.name;
         } else {
+          this.getUserMaster();
           return user_id;
         }
       },
