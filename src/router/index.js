@@ -2,6 +2,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
 import Status from "../views/Status";
+import Setting from "@/views/Setting";
 
 Vue.use(VueRouter)
 
@@ -23,6 +24,11 @@ const routes = [
     path: '/status/:id',
     name: 'Status',
     component: Status
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: Setting
   }
 ]
 

@@ -29,7 +29,9 @@
       <div>version 1.1</div>
       <v-spacer>
       </v-spacer>
-      <v-btn text to="/">TOP</v-btn>
+      <v-btn text to="/settings">SETTINGS</v-btn>
+      <v-btn text to="/" @click="scrollTop">TOP</v-btn>
+
     </v-app-bar>
 
     <v-main>
@@ -46,6 +48,11 @@ export default {
   data: () => ({
     //
   }),
+  methods: {
+    scrollTop() {
+      scrollTo(0,0)
+    }
+  }
 
 };
 </script>
