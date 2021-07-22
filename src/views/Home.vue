@@ -140,6 +140,9 @@
       show: function (id) {
         return BASE_URL + '/text/' + id;
       }
+    },
+    like: function(id) {
+      return BASE_URL + '/like/' + id;
     }
   }
   export default {
@@ -159,6 +162,7 @@
       name: null,
       description: null,
       myUserId: null,
+      likes: [],
     }),
 
     beforeDestroy () {
@@ -196,6 +200,7 @@
       loader() {
         this.addEvent();
         this.getUserMaster();
+        //this.getFavorites();
       },
       register() {
         if (this.name !== null && this.description !== null) {
@@ -246,6 +251,13 @@
               this.$set(this, 'description', myUser.description);
             }
           })
+      },
+      getFavorites () {
+        this.items.forEach((post) => {
+          this.axios.get(API.like(post.id)).then((response) => {
+            this.$set(this.likes, post.id, response);
+          })
+        })
       },
       genAlert () {
         const color = this.genColor()

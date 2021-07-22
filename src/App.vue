@@ -26,6 +26,9 @@
       </div>
 
       <v-spacer></v-spacer>
+      <div>version 1.1</div>
+      <v-spacer>
+      </v-spacer>
       <v-btn text to="/">TOP</v-btn>
     </v-app-bar>
 
@@ -43,5 +46,6 @@ export default {
   data: () => ({
     //
   }),
+
 };
 </script>
