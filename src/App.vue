@@ -26,7 +26,7 @@
       </div>
 
       <v-spacer></v-spacer>
-      <div>version 1.1</div>
+      <div>version 1.2</div>
       <v-spacer>
       </v-spacer>
       <v-btn text to="/settings">SETTINGS</v-btn>
