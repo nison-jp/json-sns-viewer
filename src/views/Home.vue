@@ -203,6 +203,7 @@
             name: this.name,
             description: this.description,
           }).then((response) => {
+            localStorage.setItem('user_id', response.data.id);
             console.log(response);
             this.getUserMaster();
           })
