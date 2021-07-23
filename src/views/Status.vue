@@ -12,9 +12,6 @@
         <v-col cols="12">
           {{post.text}}
         </v-col>
-        <v-col cols="12" v-if="post.in_reply_to_text_id != null">
-          <Status :id="post.in_reply_to_text_id"></Status>
-        </v-col>
       </v-row>
     </v-card-text>
   </v-card>
@@ -46,6 +43,7 @@ export default {
   name: "Status",
   props: {
     id: null,
+    in_reply_to_text_id: null,
   },
   data: () => ({
     users: [],

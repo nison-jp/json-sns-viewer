@@ -8,6 +8,27 @@
     >
       <span class="text-h6">Posts</span>
       <v-spacer></v-spacer>
+      <v-menu>
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn
+              text
+              v-bind="attrs"
+              v-on="on"
+          >
+            <v-icon>mdi-menu</v-icon>
+          </v-btn>
+        </template>
+        <v-list>
+
+          <v-list-item @click="getAllPosts">
+            UPDATE POSTS
+          </v-list-item>
+          <v-list-item @click="getUserMaster">
+            UPDATE USERS
+          </v-list-item>
+          <v-list-item @click="getImageCache">UPDATE IMAGES</v-list-item>
+        </v-list>
+      </v-menu>
       <v-btn
           :outlined="interval == null"
           :color="interval == null ? 'white' : 'primary'"
@@ -25,49 +46,21 @@
               :key="item.id"
               :color="item.color"
           >
-            <v-card
-                tile
-                elevation="4"
-
+          <Tweet
+            :show-reply-includes="showReply.includes"
+            :addLike="addLike"
+            :showReplyPush="showReply.push"
+            :getImages="getImages"
+            :getLikeCount="getLikeCount"
+            :addEvent="addEvent"
+            :showUserDialog="showUserDialog"
+            :userName="userName"
+            :nl2br="nl2br"
+            :item="item"
+            :items="items"
             >
-              <v-card-title @click="showUserDialog(item._user_id)">{{ userName(item._user_id) }}</v-card-title>
-              <v-card-subtitle>
-                Posted at: {{ item._created_at }} <br>
-                Post ID: {{ item.id }} <br>
-                <template v-if="item.in_reply_to_text_id">
-                  In Reply to the Post: {{ item.in_reply_to_text_id }} (author:
-                  {{ userName(item.in_reply_to_user_id) }})
-                </template>
-              </v-card-subtitle>
-              <v-card-text>
-                <v-row>
-                  <v-col cols="12">
-                    <p v-html="nl2br(item.text)"></p>
-                  </v-col>
-                  <v-col cols="12">
-                    <div v-for="image in getImages(item.id)"
-                         :key="image.id"
-                     >
-                      <img :src="image.base64">
-                    </div>
-                  </v-col>
-                </v-row>
-                <template v-if="showReply.includes(item.id)">
-                  <v-row>
-                    <v-col cols="12">
-                      <compose :in_reply_to_text_id="item.id" :in_reply_to_user_id="item._user_id" @close="composerClose"></compose>
-                    </v-col>
-                  </v-row>
-                </template>
-              </v-card-text>
-              <v-card-actions>
-                <v-btn text @click="showReply.push(item.id)">REPLY</v-btn>
-                <v-btn text :to="'/status/' + item.id">DETAIL</v-btn>
-                <v-btn text >LIKES:</v-btn>
-                {{ getLikeCount(item.id) }}
-                <v-btn text @click="addLike(item.id)">LIKE</v-btn>
-              </v-card-actions>
-            </v-card>
+
+          </Tweet>
 
             <!--            <v-alert-->
             <!--                :value="true"-->
@@ -93,8 +86,34 @@
             <v-textarea v-model="description"></v-textarea>
           </v-card-text>
           <v-card-actions>
-            <v-btn text @click="register">UPDATE</v-btn>
+            <v-btn text @click="register" color="success">UPDATE</v-btn>
+            <v-btn text @click="showUserTweets = !showUserTweets" color="primary">TWEETS</v-btn>
           </v-card-actions>
+          <v-card-text>
+            <template v-if="showUserTweets && showDialog">
+              <div
+                  v-for="item in getSpecificUserTweets(DialogUserId)"
+                  :key="item.id"
+                  :color="item.color"
+              >
+                <Tweet
+                    :show-reply-includes="showReply.includes"
+                    :addLike="addLike"
+                    :showReplyPush="showReply.push"
+                    :getImages="getImages"
+                    :getLikeCount="getLikeCount"
+                    :addEvent="addEvent"
+                    :showUserDialog="showUserDialog"
+                    :userName="userName"
+                    :nl2br="nl2br"
+                    :item="item"
+                    :items="items"
+                >
+
+                </Tweet>
+              </div>
+            </template>
+          </v-card-text>
         </v-card>
       </template>
       <template v-else>
@@ -105,7 +124,28 @@
           <v-card-subtitle>{{ DialogUser.id }}</v-card-subtitle>
           <v-card-text>
             <p v-html="nl2br(DialogUser.description)" ></p>
+            Tweets:
+            <div
+                v-for="item in getSpecificUserTweets(DialogUserId)"
+                :key="item.id"
+                :color="item.color"
+            >
+              <Tweet
+                  :show-reply-includes="showReply.includes"
+                  :addLike="addLike"
+                  :showReplyPush="showReply.push"
+                  :getImages="getImages"
+                  :getLikeCount="getLikeCount"
+                  :addEvent="addEvent"
+                  :showUserDialog="showUserDialog"
+                  :userName="userName"
+                  :nl2br="nl2br"
+                  :item="item"
+                  :items="items"
+              >
 
+              </Tweet>
+            </div>
           </v-card-text>
         </v-card>
       </template>
@@ -116,7 +156,7 @@
 <script>
 //import HelloWorld from '../components/HelloWorld'
 import Compose from "@/views/Compose";
-
+import Tweet from "@/views/Tweet";
 const COLORS = [
   'info',
   'warning',
@@ -147,6 +187,9 @@ const API = {
     },
     show: function (id) {
       return BASE_URL + '/text/' + id;
+    },
+    user: function(user_id) {
+      return BASE_URL + "/text/all?$filter=_user_id eq '" + user_id + "'&$orderby=_created_at desc";
     }
   },
   like:{
@@ -184,6 +227,7 @@ export default {
 
   components: {
     Compose,
+    Tweet,
   },
   data: () => ({
     showDialog: false,
@@ -199,6 +243,9 @@ export default {
     likes: [],
     lockUserUpdate: false,
     images: [],
+    userTweets: [],
+    userTweetsObtained: false,
+    showUserTweets: false,
   }),
 
   beforeDestroy() {
@@ -218,7 +265,7 @@ export default {
     let imagesTmp = [];
     this.imagesKey().forEach((key) => {
       imagesTmp.push({
-        text_id: key.slice(6),
+        text_id: key.slice(7),
         images: JSON.parse(localStorage.getItem(key)),
       });
     });
@@ -231,13 +278,14 @@ export default {
     this.start();
   },
   computed: {
+
     sortedPosts() {
       // eslint-disable-next-line vue/no-side-effects-in-computed-properties
       return this.items.sort((a, b) => {
         var a_dat = new Date(a._created_at);
         var b_dat = new Date(b._created_at);
         return b_dat - a_dat;
-      })
+      }).slice(0,100);
     },
     DialogUser() {
       let user = this.users.find((user) => user.id === this.DialogUserId);
@@ -268,6 +316,24 @@ export default {
     },
   },
   methods: {
+    getAllPosts() {
+      this.axios.get(API.text.all)
+          .then((response) => {
+            this.bulkUpsert(this.items, response.data);
+          })
+          .catch((error) => {
+            this.$toast.error(error.toString());
+          })
+    },
+    getSpecificUserTweets(user_id) {
+      return this.items.filter((item) => item._user_id === user_id);
+    },
+    showReplyPush(id) {
+      return this.showReply.push(id);
+    },
+    showReplyIncludes(id) {
+      return this.showReply.includes(id);
+    },
     getImages(textId) {
       let imageBox = this.images.find((image) => image.text_id === textId);
       if (imageBox !== undefined) {
@@ -357,7 +423,7 @@ export default {
     addEvent() {
       this.axios.get(API.text.latest(100))
           .then((response) => {
-            this.$set(this, 'items', response.data);
+            this.bulkUpsert(this.items, response.data);
           })
           .catch((error) => {
             this.$toast.error(error.toString());
@@ -427,6 +493,9 @@ export default {
       const i = array.findIndex(_item => _item.id === item.id);
       if (i > -1) array[i] = item; // (2)
       else array.push(item);
+    },
+    bulkUpsert(array, items) {
+      items.forEach((item) => this.upsert(array,item));
     },
     async getFavorites() {
       return this.axios.get(API.like.all).then((response) => {
