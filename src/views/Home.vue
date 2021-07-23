@@ -19,7 +19,7 @@
       </v-btn>
     </v-card-title>
     <v-card-text class="py-0">
-      <compose @postComplete="addEvent"></compose>
+      <compose @close="composerClose"></compose>
           <div
               v-for="item in sortedPosts"
               :key="item.id"
@@ -42,13 +42,20 @@
               <v-card-text>
                 <v-row>
                   <v-col cols="12">
-                    {{ item.text }}
+                    <p v-html="nl2br(item.text)"></p>
+                  </v-col>
+                  <v-col cols="12">
+                    <div v-for="image in getImages(item.id)"
+                         :key="image.id"
+                     >
+                      <img :src="image.base64">
+                    </div>
                   </v-col>
                 </v-row>
                 <template v-if="showReply.includes(item.id)">
                   <v-row>
                     <v-col cols="12">
-                      <compose :in_reply_to_text_id="item.id" :in_reply_to_user_id="item._user_id"></compose>
+                      <compose :in_reply_to_text_id="item.id" :in_reply_to_user_id="item._user_id" @close="composerClose"></compose>
                     </v-col>
                   </v-row>
                 </template>
@@ -97,7 +104,8 @@
           </v-card-title>
           <v-card-subtitle>{{ DialogUser.id }}</v-card-subtitle>
           <v-card-text>
-            {{ DialogUser.description }}
+            <p v-html="nl2br(DialogUser.description)" ></p>
+
           </v-card-text>
         </v-card>
       </template>
@@ -158,6 +166,19 @@ const API = {
 }
 // eslint-disable-next-line no-unused-vars
 const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
+
+
+// eslint-disable-next-line no-unused-vars
+const groupBy = (array, getKey) =>
+    Array.from(
+        array.reduce((map, cur, idx, src) => {
+          const key = getKey(cur, idx, src);
+          const list = map.get(key);
+          if (list) list.push(cur);
+          else map.set(key, [cur]);
+          return map;
+        }, new Map())
+    );
 export default {
   name: 'Home',
 
@@ -177,6 +198,7 @@ export default {
     myUserId: null,
     likes: [],
     lockUserUpdate: false,
+    images: [],
   }),
 
   beforeDestroy() {
@@ -193,6 +215,17 @@ export default {
     if (localStorage.getItem('likes')) {
       this.$set(this, 'likes', JSON.parse(localStorage.getItem('likes')));
     }
+    let imagesTmp = [];
+    this.imagesKey().forEach((key) => {
+      imagesTmp.push({
+        text_id: key.slice(6),
+        images: JSON.parse(localStorage.getItem(key)),
+      });
+    });
+    this.$set(this, 'images', imagesTmp);
+    // if (localStorage.getItem('likes')) {
+    //   this.$set(this, 'likes', JSON.parse(localStorage.getItem('likes')));
+    // }
     this.getUserMaster();
     this.addEvent();
     this.start();
@@ -235,6 +268,41 @@ export default {
     },
   },
   methods: {
+    getImages(textId) {
+      let imageBox = this.images.find((image) => image.text_id === textId);
+      if (imageBox !== undefined) {
+        return imageBox.images;
+      } else {
+        return [];
+      }
+    },
+    imagesKey() {
+      let returningKeys = [];
+      for (var i=0; i<localStorage.length; i++) {
+        if (localStorage.key(i).startsWith('images_')) {
+          returningKeys.push(localStorage.key(i));
+        }
+      }
+      return returningKeys;
+    },
+    composerClose(reload=true, in_reply_to_text_id=null)
+    {
+      console.log('closeEmitted ',reload,in_reply_to_text_id)
+      if(in_reply_to_text_id != null) {
+        let shownIds = this.showReply.filter((text) => text != in_reply_to_text_id);
+        console.log(shownIds);
+        this.$set(this, 'showReply', shownIds);
+      }
+      if (reload) {
+        this.addEvent();
+      }
+    },
+    nl2br(str) {
+      if (str === null || str === undefined) {
+        return '';
+      }
+      return str.replace(/\r\n/g, '<br />').replace(/\r|\n/g, '<br />');
+    },
     isMyUser(user_id) {
       return localStorage.getItem('user_id') === user_id;
     },
@@ -399,6 +467,17 @@ export default {
       clearInterval(this.interval)
       this.interval = null
     },
+    getImageCache() {
+      this.axios.get(API.image.all).then((response) => {
+        this.$set(this, 'images', groupBy(response.data, image => image.bind_text_id).map((groupedImages) => {
+          return {
+            text_id: groupedImages[0],
+            images: groupedImages[1]
+          };
+        }));
+      })
+
+    }
   },
   watch: {
     items(newItems) {
@@ -409,6 +488,11 @@ export default {
     },
     likes(newLikes) {
       localStorage.setItem('likes',JSON.stringify(newLikes));
+    },
+    images(newImages) {
+      newImages.forEach((newImage) => {
+        localStorage.setItem('images_' + newImage.text_id, JSON.stringify(newImage.images));
+      })
     },
     showUserDialog(newDialogState) {
       if (!newDialogState) {
