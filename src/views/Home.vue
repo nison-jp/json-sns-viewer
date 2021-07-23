@@ -77,7 +77,7 @@
         v-model="showDialog"
         width="500"
     >
-      <template v-if="isMyUser(DialogUser.id)">
+      <template v-if="isMyUser(DialogUserId)">
         <v-card>
           <v-card-title>
             <v-text-field v-model="name" label="name"></v-text-field>
