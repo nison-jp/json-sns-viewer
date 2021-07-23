@@ -58,6 +58,7 @@
             :nl2br="nl2br"
             :item="item"
             :items="items"
+            :showThread="showThread"
             >
 
           </Tweet>
@@ -79,11 +80,13 @@
       <template v-if="isMyUser(DialogUser.id)">
         <v-card>
           <v-card-title>
-            <v-text-field v-model="name"></v-text-field>
+            <v-text-field v-model="name" label="name"></v-text-field>
+            <v-spacer></v-spacer>
+            <v-btn text @click="showDialog = false"><v-icon>mdi-close</v-icon></v-btn>
           </v-card-title>
-          <v-card-subtitle>{{ DialogUser.id }}</v-card-subtitle>
+          <v-card-subtitle>User ID:{{ DialogUser.id }}</v-card-subtitle>
           <v-card-text>
-            <v-textarea v-model="description"></v-textarea>
+            <v-textarea v-model="description" label="description"></v-textarea>
           </v-card-text>
           <v-card-actions>
             <v-btn text @click="register" color="success">UPDATE</v-btn>
@@ -108,6 +111,7 @@
                     :nl2br="nl2br"
                     :item="item"
                     :items="items"
+                    :showThread="showThread"
                 >
 
                 </Tweet>
@@ -120,6 +124,8 @@
         <v-card>
           <v-card-title>
             {{ DialogUser.name }}
+            <v-spacer></v-spacer>
+            <v-btn text @click="showDialog = false"><v-icon>mdi-close</v-icon></v-btn>
           </v-card-title>
           <v-card-subtitle>{{ DialogUser.id }}</v-card-subtitle>
           <v-card-text>
@@ -142,12 +148,36 @@
                   :nl2br="nl2br"
                   :item="item"
                   :items="items"
+                  :showThread="showThread"
               >
 
               </Tweet>
             </div>
           </v-card-text>
         </v-card>
+      </template>
+    </v-dialog>
+    <v-dialog
+      v-model="showThreadDialog"
+      max-width="500px"
+    >
+      <template v-if="showThreadDialog && (threadDialogId !== null)">
+        <div v-for="item in threadTweets" :key="item.id">
+          <Tweet
+              :show-reply-includes="showReply.includes"
+              :addLike="addLike"
+              :showReplyPush="showReply.push"
+              :getImages="getImages"
+              :getLikeCount="getLikeCount"
+              :addEvent="addEvent"
+              :showUserDialog="showUserDialog"
+              :userName="userName"
+              :nl2br="nl2br"
+              :item="item"
+              :items="items"
+              :showThread="showThread"
+          ></Tweet>
+        </div>
       </template>
     </v-dialog>
   </v-card>
@@ -246,6 +276,8 @@ export default {
     userTweets: [],
     userTweetsObtained: false,
     showUserTweets: false,
+    showThreadDialog: false,
+    threadDialogId: null,
   }),
 
   beforeDestroy() {
@@ -278,7 +310,9 @@ export default {
     this.start();
   },
   computed: {
-
+    threadTweets () {
+      return this.getThread(this.threadDialogId);
+    },
     sortedPosts() {
       // eslint-disable-next-line vue/no-side-effects-in-computed-properties
       return this.items.sort((a, b) => {
@@ -316,6 +350,45 @@ export default {
     },
   },
   methods: {
+    showThread (text_id) {
+      this.$set(this, 'threadDialogId', text_id);
+      this.$set(this, 'showThreadDialog', true);
+    },
+    getThread(text_id) {
+      let result = [];
+      let tweet = this.items.find((item) => item.id === text_id);
+      result.push(tweet);
+      this.getAheadThreadRecursive(text_id, result);
+      this.getBelowThreadRecursive(text_id, result);
+      return result.sort((a, b) => {
+        var a_dat = new Date(a._created_at);
+        var b_dat = new Date(b._created_at);
+        return a_dat - b_dat;
+      });
+    },
+    getAheadThreadRecursive(text_id, array) {
+      let replies = this.items.filter((text) => text.in_reply_to_text_id === text_id);
+      if (replies.length === 0) {
+        return;
+      } else {
+        for(let i = 0; i < replies.length; i++) {
+          array.push(replies[i]);
+          this.getAheadThreadRecursive(replies[i].id, array);
+        }
+      }
+    },
+    async getBelowThreadRecursive(text_id, array) {
+      let text = this.items.find((item) => item.id === text_id);
+      if (text.in_reply_to_text_id === undefined) {
+        return;
+      } else {
+        let replies = this.items.filter((item) => item.id === text.in_reply_to_text_id);
+        for(let i = 0; i < replies.length; i++) {
+          array.push(replies[i]);
+          await this.getBelowThreadRecursive(replies[i].id, array);
+        }
+      }
+    },
     getAllPosts() {
       this.axios.get(API.text.all)
           .then((response) => {
@@ -326,7 +399,7 @@ export default {
           })
     },
     getSpecificUserTweets(user_id) {
-      return this.items.filter((item) => item._user_id === user_id);
+      return this.items.filter((item) => item._user_id === user_id).slice(0,100);
     },
     showReplyPush(id) {
       return this.showReply.push(id);
@@ -384,9 +457,11 @@ export default {
           name: this.name,
           description: this.description,
         }).then((response) => {
+          this.$set(this, 'lockUserUpdate', false);
           localStorage.setItem('user_id', response.data.id);
-          this.$toast.success('ユーザー登録しました: '. response.data.id);
+          this.$toast.success('ユーザー登録しました: '+ response.data.id);
           this.getUserMaster();
+          this.$set(this, 'lockUserUpdate', true);
         }).catch((error) => {
           this.$toast.error(error.toString());
         })
@@ -491,7 +566,7 @@ export default {
     },
     upsert(array, item) { // (1)
       const i = array.findIndex(_item => _item.id === item.id);
-      if (i > -1) array[i] = item; // (2)
+      if (i > -1) this.$set(array,i, item); // (2)
       else array.push(item);
     },
     bulkUpsert(array, items) {
@@ -563,7 +638,7 @@ export default {
         localStorage.setItem('images_' + newImage.text_id, JSON.stringify(newImage.images));
       })
     },
-    showUserDialog(newDialogState) {
+    showDialog(newDialogState) {
       if (!newDialogState) {
         this.$set(this, 'lockUserUpdate', false);
       }
