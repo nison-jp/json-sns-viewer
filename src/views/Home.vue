@@ -27,6 +27,8 @@
             UPDATE USERS
           </v-list-item>
           <v-list-item @click="getImageCache">UPDATE IMAGES</v-list-item>
+          <v-list-item @click="tweetShownCount += 100">SHOW MORE(NOW: {{tweetShownCount}})</v-list-item>
+          <v-list-item @click="tweetShownCount -= 100">SHOW LESS(NOW: {{tweetShownCount}})</v-list-item>
         </v-list>
       </v-menu>
       <v-btn
@@ -139,7 +141,6 @@
 
           <v-card-subtitle>Tweets:</v-card-subtitle>
           <v-card-text>
-
             <div
                 v-for="item in getSpecificUserTweets(DialogUserId)"
                 :key="item.id"
@@ -300,6 +301,7 @@ export default {
     showUserTweets: false,
     showThreadDialog: false,
     threadDialogId: null,
+    tweetShownCount: 100,
   }),
 
   beforeDestroy() {
@@ -341,7 +343,7 @@ export default {
         var a_dat = new Date(a._created_at);
         var b_dat = new Date(b._created_at);
         return b_dat - a_dat;
-      }).slice(0,100);
+      }).slice(0,this.tweetShownCount);
     },
     DialogUser() {
       let user = this.users.find((user) => user.id === this.DialogUserId);
