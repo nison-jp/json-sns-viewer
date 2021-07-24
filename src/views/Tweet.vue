@@ -24,7 +24,7 @@
           <div v-for="image in getImages(item.id)"
                :key="image.id"
           >
-            <a :href="image.base64" target="_blank"><img :src="image.base64"></a>
+            <a :href="image.base64" target="_blank"><img style="max-width:100%;" :src="image.base64"></a>
           </div>
         </v-col>
       </v-row>
