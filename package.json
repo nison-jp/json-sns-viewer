@@ -6,7 +6,8 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "ftp-deploy": "node deploy"
   },
   "dependencies": {
     "@mdi/font": "^5.9.55",
@@ -29,8 +30,10 @@
     "babel-eslint": "^10.1.0",
     "eslint": "^6.7.2",
     "eslint-plugin-vue": "^6.2.2",
+    "ftp-deploy": "^2.4.1",
     "gh-pages": "^3.2.3",
     "node-sass": "^4.12.0",
+    "s3-deploy": "^1.4.0",
     "sass": "~1.32.0",
     "sass-loader": "^10.0.0",
     "vue-cli-plugin-vuetify": "~2.4.1",
