@@ -76,20 +76,24 @@
     <v-dialog
         v-model="showDialog"
         width="500"
+        scrollable
     >
       <template v-if="isMyUser(DialogUserId)">
         <v-card>
-          <v-card-title>
-            <v-text-field v-model="name" label="name"></v-text-field>
+          <v-toolbar color="primary" fixed dense>
+            MY PROFILE
             <v-spacer></v-spacer>
             <v-btn text @click="showDialog = false"><v-icon>mdi-close</v-icon></v-btn>
+          </v-toolbar>
+          <v-card-title>
+            <v-text-field v-model="name" label="name"></v-text-field>
           </v-card-title>
           <v-card-subtitle>User ID:{{ DialogUser.id }}</v-card-subtitle>
-          <v-card-text>
+          <v-card-subtitle>
             <v-textarea v-model="description" label="description"></v-textarea>
-          </v-card-text>
+          </v-card-subtitle>
           <v-card-actions>
-            <v-btn text @click="register" color="success">UPDATE</v-btn>
+            <v-btn text @click="register" color="success">{{ DialogUser.id === null ? 'REGISTER' : 'UPDATE' }}</v-btn>
             <v-btn text @click="showUserTweets = !showUserTweets" color="primary">TWEETS</v-btn>
           </v-card-actions>
           <v-card-text>
@@ -122,15 +126,20 @@
       </template>
       <template v-else>
         <v-card>
-          <v-card-title>
-            {{ DialogUser.name }}
-            <v-spacer></v-spacer>
-            <v-btn text @click="showDialog = false"><v-icon>mdi-close</v-icon></v-btn>
-          </v-card-title>
-          <v-card-subtitle>{{ DialogUser.id }}</v-card-subtitle>
+            <v-toolbar dense fixed color="green">
+              USER PROFILE
+              <v-spacer></v-spacer>
+              <v-btn text @click="showDialog = false"><v-icon>mdi-close</v-icon></v-btn>
+            </v-toolbar>
+            <v-card-title>{{ DialogUser.name }}</v-card-title>
+            <v-card-subtitle>{{ DialogUser.id }}</v-card-subtitle>
+            <v-card-subtitle>
+              <p v-html="nl2br(DialogUser.description)" ></p>
+            </v-card-subtitle>
+
+          <v-card-subtitle>Tweets:</v-card-subtitle>
           <v-card-text>
-            <p v-html="nl2br(DialogUser.description)" ></p>
-            Tweets:
+
             <div
                 v-for="item in getSpecificUserTweets(DialogUserId)"
                 :key="item.id"
@@ -160,25 +169,38 @@
     <v-dialog
       v-model="showThreadDialog"
       max-width="500px"
+      scrollable
     >
-      <template v-if="showThreadDialog && (threadDialogId !== null)">
-        <div v-for="item in threadTweets" :key="item.id">
-          <Tweet
-              :show-reply-includes="showReply.includes"
-              :addLike="addLike"
-              :showReplyPush="showReply.push"
-              :getImages="getImages"
-              :getLikeCount="getLikeCount"
-              :addEvent="addEvent"
-              :showUserDialog="showUserDialog"
-              :userName="userName"
-              :nl2br="nl2br"
-              :item="item"
-              :items="items"
-              :showThread="showThread"
-          ></Tweet>
-        </div>
-      </template>
+      <v-card>
+        <v-toolbar color="accent" fixed dense>
+          THREADS
+          <v-spacer>
+          </v-spacer>
+          <v-btn text @click="showThreadDialog = false"><v-icon>mdi-close</v-icon></v-btn>
+        </v-toolbar>
+        <v-card-text>
+          <template v-if="showThreadDialog && (threadDialogId !== null)">
+            <div v-for="item in threadTweets" :key="item.id">
+              <Tweet
+                  :show-reply-includes="showReply.includes"
+                  :addLike="addLike"
+                  :showReplyPush="showReply.push"
+                  :getImages="getImages"
+                  :getLikeCount="getLikeCount"
+                  :addEvent="addEvent"
+                  :showUserDialog="showUserDialog"
+                  :userName="userName"
+                  :nl2br="nl2br"
+                  :item="item"
+                  :items="items"
+                  :showThread="showThread"
+              ></Tweet>
+            </div>
+          </template>
+        </v-card-text>
+      </v-card>
+
+
     </v-dialog>
   </v-card>
 </template>
