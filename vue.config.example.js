@@ -3,5 +3,11 @@ module.exports = {
     'vuetify'
   ],
 
-  publicPath: ''
+  publicPath: '',
+  pwa: {
+    workboxPluginMode: 'GenerateSW',
+    workboxOptions: {
+      exclude: /.htaccess/
+    }
+  }
 }
