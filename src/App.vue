@@ -8,7 +8,7 @@
       <v-btn text to="/" @click="scrollTop">TOP</v-btn>
 
       <v-spacer></v-spacer>
-      <div>V1.6.3</div>
+      <div>V1.6.4</div>
       <v-spacer></v-spacer>
       <v-btn text to="/settings"><v-icon>mdi-cog</v-icon></v-btn>
 

@@ -18,9 +18,7 @@
     <v-card-text>
       <v-row>
         <v-col cols="12">
-          <p>
-            {{nl2br(item.text)}}
-          </p>
+          <p style="white-space: pre-wrap;">{{item.text}}</p>
         </v-col>
         <v-col cols="12" v-if="getImages(item.id).length !== 0">
           <div v-for="image in getImages(item.id)"
