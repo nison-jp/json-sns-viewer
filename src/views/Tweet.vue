@@ -41,11 +41,13 @@
       <v-btn text @click="showReply = true">
         <v-icon>mdi-reply</v-icon>
       </v-btn>
-      <v-btn text @click="showThread(item.id)">THREAD</v-btn>
       <v-btn text @click="addLike(item.id)">
         <v-icon>mdi-heart</v-icon>
       </v-btn>
       {{ getLikeCount(item.id) }}
+      <v-btn text @click="showThread(item.id)">THREAD</v-btn>
+      <v-btn text @click="getTweetImage(item.id)">LOAD IMAGES</v-btn>
+
     </v-card-actions>
   </v-card>
 </template>
@@ -71,6 +73,7 @@ export default {
     nl2br: Function,
     items: Array,
     showThread: Function,
+    getTweetImage: Function,
   },
   data: () => ({
     showReply: false,

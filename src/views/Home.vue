@@ -118,6 +118,7 @@
                     :item="item"
                     :items="items"
                     :showThread="showThread"
+                    :getTweetImage="getTweetImage"
                 >
 
                 </Tweet>
@@ -257,6 +258,9 @@ const API = {
     count: BASE_URL + '/image/count',
     show: function (id) {
       return BASE_URL + '/image/' + id;
+    },
+    text: function (text_id) {
+      return BASE_URL + '/image/all?$filter=bind_text_id eq ' + text_id;
     }
   }
 }
@@ -630,6 +634,7 @@ export default {
     },
     start() {
       this.interval = setInterval(this.loader, 5000)
+      this.interval = setInterval(this.getImageCache, 60000)
     },
     stop() {
       clearInterval(this.interval)
@@ -644,7 +649,14 @@ export default {
           };
         }));
       })
-
+    },
+    getTweetImage(text_id) {
+      this.axios.get(API.image.text(text_id)).then((response) => {
+        this.upsert(this.images, {
+          text_id: text_id,
+          images: response.data
+        });
+      })
     }
   },
   watch: {
