@@ -17,6 +17,7 @@
     <v-container>
       <v-row>
         <v-btn
+            :disabled="(text.length === 0 || text.length > 280)"
             text
             color="success"
             @click="submit(false)"
@@ -29,6 +30,7 @@
           color="cancel"
           @click="$emit('close',false,in_reply_to_text_id)"
         >CANCEL</v-btn>
+        <span :style="(text.length > 280) ? 'color:red;':''">あと{{ 280 - text.length }}文字</span>
         <v-spacer></v-spacer>
         <v-switch class="my-0" v-model="sendOnEnter" :label="'送信モード: ' + (sendOnEnter ? 'Enterキーで送信' : 'Shift+Enterで送信')"></v-switch>
       </v-row>
@@ -55,7 +57,7 @@ export default {
   },
   data: () => ({
     sendOnEnter: false,
-    text: null,
+    text: '',
     sending: false,
   }),
   methods: {
@@ -73,6 +75,10 @@ export default {
     },
     submit(isTest=false) {
       if (this.text !== null) {
+        if (this.text.length > 280) {
+            this.$toast.error("長すぎます。280文字以内にしてください。")
+            return;
+        }
         let text = this.text;
         this.$set(this, 'sending', true);
         this.axios.post('https://versatileapi.herokuapp.com/api/text' + (isTest ? '_test' : ''), {
@@ -95,6 +101,11 @@ export default {
           this.$nextTick(() => {
             this.$refs.refsTextField.$refs.input.focus();
           })
+        }).catch((error) => {
+          console.error(error.response.data.toString());
+          this.$set(this, 'sending', false);
+          let errorDetail = error.response.data.toString() ?? '(不明)';
+          this.$toast.error(error.toString() + "\n 詳細: " + errorDetail);
         })
 
       }
