@@ -76,37 +76,38 @@ export default {
     submit(isTest=false) {
       if (this.text !== null) {
         if (this.text.length > 280) {
-            this.$toast.error("長すぎます。280文字以内にしてください。")
-            return;
-        }
-        let text = this.text;
-        this.$set(this, 'sending', true);
-        this.axios.post('https://versatileapi.herokuapp.com/api/text' + (isTest ? '_test' : ''), {
-          text: text,
-          in_reply_to_text_id: this.in_reply_to_text_id,
-          in_reply_to_user_id: this.in_reply_to_user_id
-        }, {
-          headers: {
-            'Authorization': 'HelloWorld'
-          }
-        }).then((response) => {
-          console.log(response);
-          this.$set(this, 'text', null);
-          this.$set(this, 'sending', false);
-          this.$emit('close', true, this.in_reply_to_text_id)
-          this.$toast.success('投稿しました:' + text);
-          this.axios.get('https://versatileapi.herokuapp.com/api/text/' + response.data.id).then((text) => {
-            localStorage.setItem('user_id', text.data._user_id);
-          });
-          this.$nextTick(() => {
-            this.$refs.refsTextField.$refs.input.focus();
+            this.$toast.error("長すぎます。280文字以内にしてください。");
+        } else {
+          let text = this.text;
+          this.$set(this, 'sending', true);
+          this.axios.post('https://versatileapi.herokuapp.com/api/text' + (isTest ? '_test' : ''), {
+            text: text,
+            in_reply_to_text_id: this.in_reply_to_text_id,
+            in_reply_to_user_id: this.in_reply_to_user_id
+          }, {
+            headers: {
+              'Authorization': 'HelloWorld'
+            }
+          }).then((response) => {
+            console.log(response);
+            this.$set(this, 'text', '');
+            this.$set(this, 'sending', false);
+            this.$emit('close', true, this.in_reply_to_text_id)
+            this.$toast.success('投稿しました:' + text);
+            this.axios.get('https://versatileapi.herokuapp.com/api/text/' + response.data.id).then((text) => {
+              localStorage.setItem('user_id', text.data._user_id);
+            });
+            this.$nextTick(() => {
+              this.$refs.refsTextField.$refs.input.focus();
+            })
+          }).catch((error) => {
+            console.error(error.response.data.toString());
+            this.$set(this, 'sending', false);
+            let errorDetail = error.response.data.toString() ?? '(不明)';
+            this.$toast.error(error.toString() + "\n 詳細: " + errorDetail);
           })
-        }).catch((error) => {
-          console.error(error.response.data.toString());
-          this.$set(this, 'sending', false);
-          let errorDetail = error.response.data.toString() ?? '(不明)';
-          this.$toast.error(error.toString() + "\n 詳細: " + errorDetail);
-        })
+
+        }
 
       }
     }
